@@ -1,0 +1,40 @@
+
+<!--- 
+    
+    Use particle cli to get device ID and create access token:
+
+    Device ID: particle list
+    Access Token: particle token create --expires-in 3600  
+
+-->
+
+<!DOCTYPE>
+<html>
+  <body>
+  <center>
+  <br>
+  <br>
+  <br>
+  <form action="https://api.particle.io/v1/devices/>device-ID-HERE</toggleBlueLed?access_token=>access-token-HERE<" method="POST">
+    Tell your device what to do!<br>
+    <br>
+    <input type="radio" name="arg" value="on">Turn the LED on.
+    <br>
+    <input type="radio" name="arg" value="off">Turn the LED off.
+    <br>
+    <br>
+    <input type="submit" value="Set">
+  </form>
+  <form action="https://api.particle.io/v1/devices/>device-ID-HERE</toggleWhiteLed?access_token=>access-token-HERE<" method="POST">
+    Tell your device what to do!<br>
+    <br>
+    <input type="radio" name="arg" value="on">Turn the LED on.
+    <br>
+    <input type="radio" name="arg" value="off">Turn the LED off.
+    <br>
+    <br>
+    <input type="submit" value="Set">
+  </form>
+  </center>
+  </body>
+</html>
