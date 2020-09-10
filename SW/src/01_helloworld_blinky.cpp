@@ -9,21 +9,19 @@
 */
 
 #include "Particle.h"
+#include "leds.h"
+#include "pins.h"
 /*  Pre-setup configuration */
-const int BLUE_LED = D7;
-const int WHITE_LED = D2;
-const int PHOTO_SENSOR = A0;
 
-// Reads from PHOTO_SENSOR:
+// Store value from PHOTO_SENSOR:
 int analog_value; 
 
 // blue LED return value
 int blueLED = LOW;
 
-// Local event prototype
+// Subscriptions Prototypes and Associated Variables
 void eventHandler(const char *event, const char *data);
 
-// Buddy event prototype.. Subscribe to Jan's Event
 void jinxedEventHandler(const char *event, const char *data);
 long int i_data = 0;
 
@@ -33,11 +31,11 @@ void brightnesstHandler(const char *event, const char *data);
 enum State { READY, RUNNING };
 State state = READY;
 
-// Check if publish was successful
+// Boolean vars to check if a publish was successful
 bool success = false;
 bool thingsspeak = false;
 
-// Install loghandler with baudrate 115200
+// Install loghandler with default baudrate 115200
 SerialLogHandler logToUsb;
 int setBlueLed(String command);
 int setWhiteLed(String command);
@@ -49,7 +47,7 @@ int setWhiteLed(String command);
 ===================================================================
  */
 void setup() {
-    
+    // Argon Pinout setup 
     pinMode(BLUE_LED, OUTPUT);
     pinMode(WHITE_LED, OUTPUT);
     pinMode(PHOTO_SENSOR, INPUT);
@@ -57,19 +55,16 @@ void setup() {
 
     // Cloud Subscriptions
     Particle.subscribe("brightlight_from_dkwv", eventHandler, ALL_DEVICES);
-
-    // Particle.subscribe("Jinxed sensor interrupted", jinxedEventHandler, "e00fce6864ea86ea7bb98251");
     Particle.subscribe("Jinxed_sensor_interrupted", jinxedEventHandler, ALL_DEVICES);
-    
     Particle.subscribe("brightness adjusted", brightnesstHandler, ALL_DEVICES);
-
+    
     // Cloud Functions
+    // From "leds.h":
     Particle.function("setBlueLed", setBlueLed);
     Particle.function("setWhiteLed", setWhiteLed);
 
     // Cloud Variables
     Particle.variable("analog_value", &analog_value, INT);
-
 }
 /*
 ===================================================================
@@ -108,50 +103,15 @@ void loop() {
 
 /*
 ===================================================================
-    Extra Functions:
+    Subscriptions (max 4):
     ---------------------------------------
-1   setBlueLed
-2   setWhiteLed
-3   eventHandler        subscription ALL
-4   jinxedEventHandler  subscription ALL
-5   brightnesstHandler  subscription ALL
+    Name                Scope
+1   eventHandler        ALL_DEVICES
+2   jinxedEventHandler  ALL_DEVICES
+3   brightnesstHandler  ALL_DEVICES
+4   -
 ===================================================================
  */
-
-
-// Set on-board Blue LED "on" or "off"
-int setBlueLed(String command) {
-    
-    if (command == "on") {
-        digitalWrite(BLUE_LED, HIGH);
-        return 1;
-    }
-    else if (command == "off") {
-        digitalWrite(BLUE_LED, LOW);
-        return 0;
-    }
-    else {
-        return -1;
-    }
-}
-
-
-// Set external white LED "on" or "off" (Ref des: D1)
-// Schematic: https://github.com/VintherWolf/IOT/tree/master/HW/Schematic/PhotoSensor
-int setWhiteLed(String command) {
-    
-    if (command == "on") {
-        digitalWrite(WHITE_LED, HIGH);
-        return 1;
-    }
-    else if (command == "off") {
-        digitalWrite(WHITE_LED, LOW);
-        return 0;
-    }
-    else {
-        return -1;
-    }
-}
 
 // Local event that toggles external White LED off
 void eventHandler(const char *event, const char *data) {
