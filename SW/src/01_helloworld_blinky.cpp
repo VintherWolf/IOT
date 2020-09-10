@@ -8,7 +8,7 @@
 *              
 */
 
-
+#include "Particle.h"
 /*  Pre-setup configuration */
 const int BLUE_LED = D7;
 const int WHITE_LED = D2;
@@ -16,7 +16,6 @@ const int PHOTO_SENSOR = A0;
 
 // Reads from PHOTO_SENSOR:
 int analog_value; 
-
 
 // blue LED return value
 int blueLED = LOW;
@@ -28,15 +27,20 @@ void eventHandler(const char *event, const char *data);
 void jinxedEventHandler(const char *event, const char *data);
 long int i_data = 0;
 
+void brightnesstHandler(const char *event, const char *data);
+
 // States to avoid publish bursts (ensure "singleshot" publish)
 enum State { READY, RUNNING };
 State state = READY;
 
 // Check if publish was successful
 bool success = false;
+bool thingsspeak = false;
 
 // Install loghandler with baudrate 115200
 SerialLogHandler logToUsb;
+int setBlueLed(String command);
+int setWhiteLed(String command);
 
 /*
 ===================================================================
@@ -57,6 +61,8 @@ void setup() {
     // Particle.subscribe("Jinxed sensor interrupted", jinxedEventHandler, "e00fce6864ea86ea7bb98251");
     Particle.subscribe("Jinxed_sensor_interrupted", jinxedEventHandler, ALL_DEVICES);
     
+    Particle.subscribe("brightness adjusted", brightnesstHandler, ALL_DEVICES);
+
     // Cloud Functions
     Particle.function("setBlueLed", setBlueLed);
     Particle.function("setWhiteLed", setWhiteLed);
@@ -80,13 +86,24 @@ void loop() {
    // Get analog value from Photo sensor
    analog_value = analogRead(PHOTO_SENSOR);
 
+   thingsspeak = Particle.publish("Brightness",  String(analog_value), PRIVATE);
+
+   if (thingsspeak == true)
+   {
+       Log.info("Succssfully published brightness to Thingsspeak");
+       thingsspeak = false;
+   }
+   else {
+       Log.info("Failed to publish brightness to Thingsspeak");
+   }
+
    if (analog_value > 50 && state == READY) {
        digitalWrite(BLUE_LED, LOW);
        state = RUNNING;
        success = Particle.publish("brightlight_from_dkwv","seen", PUBLIC);
    }
    // Casual delay , may be omitted
-   delay(100);
+   delay(10000);
 }
 
 /*
@@ -95,8 +112,9 @@ void loop() {
     ---------------------------------------
 1   setBlueLed
 2   setWhiteLed
-3   eventHandler
-4   jinxedEventHandler
+3   eventHandler        subscription ALL
+4   jinxedEventHandler  subscription ALL
+5   brightnesstHandler  subscription ALL
 ===================================================================
  */
 
@@ -156,6 +174,23 @@ void jinxedEventHandler(const char *event, const char *data) {
     i_data = strtol(data, NULL, 10);
 
     if (i_data > 250) {
+        digitalWrite(WHITE_LED, LOW);
+        digitalWrite(BLUE_LED, HIGH);
+        state = READY;
+    }
+    else {
+        digitalWrite(WHITE_LED, HIGH);
+        digitalWrite(BLUE_LED, LOW);
+        state = READY;
+    }
+}
+
+void brightnesstHandler(const char *event, const char *data) {
+    Log.info("Received %s %s", event, (data ? data : "NULL"));
+
+    i_data = strtol(data, NULL, 10);
+
+    if (i_data > 10) {
         digitalWrite(WHITE_LED, LOW);
         digitalWrite(BLUE_LED, HIGH);
         state = READY;
